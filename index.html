@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Happy Diwali - Playland</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* General Setup - DARK THEME */
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Poppins", sans-serif;
+            background: radial-gradient(circle at top, #1a0029, #000);
+            color: white;
+            text-align: center;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        h1, h2, h3, p {
+            margin: 0.5em 0;
+        }
+
+        /* Start Screen - DARK THEME */
+        #start-screen {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle at top, #250043, #000);
+            padding: 20px;
+            position: relative;
+            z-index: 50;
+        }
+
+        #name-input {
+            padding: 12px 25px;
+            border-radius: 12px;
+            border: 2px solid #ffcc00;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1.2em;
+            outline: none;
+            text-align: center;
+            max-width: 90%;
+            margin-bottom: 20px;
+            z-index: 10;
+        }
+
+        #start-btn {
+            padding: 12px 30px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 15px;
+            background: linear-gradient(90deg, #ff00cc, #3333ff);
+            color: white;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-transform: uppercase;
+            font-weight: bold;
+            z-index: 10;
+        }
+
+        #start-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 0 10px #ff00cc;
+        }
+        
+        /* New Rocket for Start Screen Blast */
+        .start-rocket {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 3em;
+            opacity: 0;
+            z-index: 20;
+        }
+        
+        @keyframes launch-rocket {
+            0% { bottom: 50px; opacity: 1; transform: translateX(-50%) rotate(0deg); }
+            80% { bottom: 85vh; opacity: 1; transform: translateX(-50%) rotate(5deg); }
+            100% { bottom: 90vh; opacity: 0; transform: translateX(-50%) rotate(5deg); }
+        }
+
+        /* Main container - After animation, shows games */
+        #main-container {
+            display: none;
+            /* FIX 1: Reduced top padding */
+            padding: 20px 20px; 
+            position: relative;
+            min-height: 100vh;
+        }
+        
+        /* Firework container for background blasts */
+        #firework-container {
+            position: fixed; 
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+            overflow: hidden;
+        }
+
+        #greeting {
+            position: relative;
+            z-index: 10;
+            font-size: 1.8em;
+            text-shadow: 0 0 15px #ff00cc, 0 0 30px #00ccff;
+            /* FIX 2: Reduced bottom margin */
+            margin-bottom: 15px;
+            max-width: 100%;
+            word-wrap: break-word; 
+        }
+
+        /* --- WORD ANIMATION STYLES --- */
+        #animation-screen {
+            position: fixed; 
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #6a211e; 
+            z-index: 1000; 
+            font-family: 'Playfair Display', serif;
+            transition: opacity 1s ease-out;
+        }
+
+        .animated-line {
+            font-size: 3.5em; 
+            color: white; 
+            opacity: 0;
+            line-height: 1.2;
+            padding: 5px 0;
+            font-weight: 700;
+            transition: opacity 0.5s ease;
+            position: relative;
+        }
+        
+        .dark-text {
+            color: #6a211e !important; 
+        }
+
+        @keyframes slide-fade-in {
+            0% { transform: translateY(20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        
+        /* --- MOBILE OPTIMIZATION --- */
+        @media (max-width: 600px) {
+            .animated-line {
+                font-size: 2.5em !important; 
+            }
+            .animated-line.dark-text {
+                 font-size: 3em !important; 
+            }
+            #greeting {
+                font-size: 1.4em !important; 
+                margin-bottom: 15px; /* Consistent reduction */
+            }
+        }
+        /* --- END WORD ANIMATION STYLES --- */
+
+        /* Shared animation for sparks/blasts */
+        .spark {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #fff, transparent);
+            pointer-events: none;
+            z-index: 10;
+            opacity: 1;
+        }
+        
+        @keyframes burst {
+            0% { opacity: 1; transform: translate(0, 0) scale(1); }
+            100% { opacity: 0; transform: var(--random-translate) scale(0.1); }
+        }
+
+        /* Menu and Game Styles */
+        .menu {
+            position: relative;
+            z-index: 50; 
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            /* FIX 3: Reduced vertical margin */
+            margin: 15px 0; 
+        }
+
+        .menu button {
+            flex-grow: 1;
+            min-width: 120px;
+            max-width: 45%;
+            padding: 15px 10px;
+            border: none;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #ff0066, #ffcc00);
+            color: white;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .menu button:active {
+            transform: scale(0.95);
+            box-shadow: 0 0 15px #ffcc00;
+        }
+
+        .game-section {
+            position: relative;
+            z-index: 10;
+            margin: 40px 0;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 20px 10px;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            min-height: 250px;
+        }
+        
+        .game-section h2 {
+             margin-top: 0;
+             margin-bottom: 15px;
+             text-shadow: 0 0 5px #ffcc00;
+        }
+        
+        /* --- GAME STYLES --- */
+        /* Diya Memory Game */
+        #diya-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            width: 90%;
+            max-width: 300px;
+            margin: 20px auto;
+        }
+
+        .diya {
+            font-size: 2.5em;
+            padding: 10px;
+            border-radius: 5px;
+            background: #444; 
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+            line-height: 1;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+            user-select: none;
+        }
+
+        .diya.lit {
+            /* Simulate a lit diya with a glow */
+            background: #ffcc00; 
+            box-shadow: 0 0 10px #ffcc00, 0 0 20px #ff6600, inset 0 0 5px #fff;
+        }
+        
+        /* Rangoli Color Match Game */
+        #rangoli-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            width: 100%;
+            max-width: 300px;
+            margin: 20px auto;
+            border: 3px solid #ffcc00;
+            padding: 5px;
+            border-radius: 10px;
+        }
+        
+        .rangoli-tile {
+            height: 60px;
+            background-color: #333;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border-radius: 5px;
+            border: 1px solid #111;
+        }
+        
+        #target-pattern-container {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .target-tile {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+        
+        /* Cracker Challenge Game Styles */
+        #cracker-game button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Footer */
+        footer {
+            position: relative;
+            z-index: 10;
+            margin: 30px 0;
+            font-size: 1em;
+            color: #ff99ff;
+        }
+    </style>
+</head>
+<body>
+
+<div id="start-screen">
+    <h1 style="font-size: 3em; color: #ffcc00; text-shadow: 0 0 10px #ff00cc;">✨ Happy Diwali ✨</h1>
+    <p>Enter your name to start your festive journey!</p>
+    <input type="text" id="name-input" placeholder="Your name..." />
+    <button id="start-btn">Start Celebration 🎆</button>
+</div>
+
+<div id="main-container">
+    <div id="firework-container"></div>
+    
+    <div id="animation-screen" style="opacity:0; pointer-events:none;">
+        </div>
+
+    <h1 id="greeting"></h1>
+    <p style="color: #ccc; position: relative; z-index: 10;">Select an activity below!</p>
+
+    <div class="menu">
+        <button onclick="startCrackerChallenge()">💥 Cracker Challenge</button>
+        <button onclick="startDiyaMemoryGame()">🪔 Diya Memory</button>
+        <button onclick="startTouchSparkle()">✨ Sparkle Touch</button>
+        <button onclick="startColorMatchGame()">🎨 Rangoli Match</button>
+    </div>
+
+    <div id="game-area" class="game-section">
+        <h2>Welcome!</h2>
+        <p>Tap a button above to start a Diwali activity!</p>
+    </div>
+
+    <footer>🪔 Greetings from <b>Ishan Wankhede</b></footer>
+</div>
+
+<audio id="animation-audio">
+    <source src="Video-967.mp3" type="audio/mp3"> 
+</audio>
+
+<audio id="explosion-sound">
+    <source src="https://assets.mixkit.co/sfx/download/mixkit-firework-explosion-1700.mp3" type="audio/mp3">
+</audio>
+<audio id="pop-sound">
+    <source src="https://assets.mixkit.co/sfx/download/mixkit-game-click-1770.mp3" type="audio/mp3">
+</audio>
+<audio id="win-sound">
+    <source src="https://assets.mixkit.co/sfx/download/mixkit-game-success-619.mp3" type="audio/mp3">
+</audio>
+<audio id="fail-sound">
+    <source src="https://assets.mixkit.co/sfx/download/mixkit-wrong-answer-bass-1033.mp3" type="audio/mp3">
+</audio>
+
+<script>
+    const startScreen = document.getElementById("start-screen");
+    const mainContainer = document.getElementById("main-container");
+    const fireworkContainer = document.getElementById("firework-container");
+    const greeting = document.getElementById("greeting");
+    const animationAudio = document.getElementById("animation-audio"); 
+    const gameArea = document.getElementById("game-area");
+    const explosionSound = document.getElementById("explosion-sound");
+    const popSound = document.getElementById("pop-sound");
+    const winSound = document.getElementById("win-sound");
+    const failSound = document.getElementById("fail-sound");
+    const animationScreen = document.getElementById("animation-screen");
+    
+    let crackerBlastInterval = null;
+
+    // --- Utility Functions ---
+    function playSound(audioElement) {
+        const clone = audioElement.cloneNode();
+        clone.volume = 0.5;
+        clone.play().catch(e => console.log('Sound play failed:', e));
+    }
+
+    function createExplosion(x, y, parentElement, isBackground = false) {
+        const colors = ["#ffcc00", "#ff6600", "#ff00cc", "#fff", "#00ccff"];
+        const particleCount = isBackground ? 50 : 100;
+        const speedMultiplier = isBackground ? 40 : 70;
+        const duration = isBackground ? 2.5 + Math.random() * 1.5 : 1 + Math.random() * 1;
+        
+        let finalX = x;
+        let finalY = y;
+        if (parentElement !== document.body && !isBackground) {
+             const parentRect = parentElement.getBoundingClientRect();
+             finalX = parentRect.left + x;
+             finalY = parentRect.top + y;
+        }
+
+
+        for (let i = 0; i < particleCount; i++) {
+            const spark = document.createElement("div");
+            spark.classList.add("spark");
+            
+            const angle = Math.random() * 2 * Math.PI;
+            const speed = Math.random() * speedMultiplier + 15;
+            const dx = Math.cos(angle) * speed;
+            const dy = Math.sin(angle) * speed;
+
+            spark.style.left = finalX + "px";
+            spark.style.top = finalY + "px";
+            spark.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            const randomTransform = `translate(${dx}px, ${dy}px) scale(0.5)`;
+            spark.style.setProperty('--random-translate', randomTransform);
+            spark.style.animation = `burst ${duration}s forwards`;
+
+            document.body.appendChild(spark); 
+            setTimeout(() => spark.remove(), duration * 1000);
+        }
+        
+        if (!isBackground) {
+              playSound(explosionSound);
+        }
+    }
+    
+    function startBackgroundCrackerBlast() {
+        if (crackerBlastInterval) return;
+
+        const blastLogic = () => {
+            const containerRect = fireworkContainer.getBoundingClientRect();
+            const x = Math.random() * containerRect.width;
+            const y = Math.random() * (containerRect.height * 0.66);
+            createExplosion(x, y, fireworkContainer, true);
+        };
+
+        blastLogic();
+        crackerBlastInterval = setInterval(blastLogic, 1000 + Math.random() * 1500);
+    }
+
+    function stopBackgroundCrackerBlast() {
+        if (crackerBlastInterval) {
+            clearInterval(crackerBlastInterval);
+            crackerBlastInterval = null;
+            fireworkContainer.innerHTML = '';
+        }
+    }
+    
+    // Add new keyframe rule for game animation (pulse)
+    let styleSheet = document.querySelector('#animation-style');
+    if (!styleSheet) {
+        styleSheet = document.createElement("style");
+        styleSheet.id = 'animation-style';
+        document.head.appendChild(styleSheet);
+    }
+    styleSheet.innerHTML += `
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+    `;
+
+    // Function to handle the transition from animation screen to main game screen
+    function completeAnimation(name) {
+        animationScreen.style.opacity = '0';
+        animationScreen.style.pointerEvents = 'none'; 
+        
+        greeting.innerHTML = `🎆 Happy Diwali, <b>${name}</b>! 🎇<br>Wishing you joy, light, and love!`;
+        
+        startBackgroundCrackerBlast();
+    }
+
+    // --- Video Animation Function ---
+    function runVideoAnimation(name) {
+        const VISUAL_OFFSET_MS = 50; 
+
+        const lines = [
+            { text: "Mere", delay: 0 + VISUAL_OFFSET_MS, background: "#6a211e", color: "white", size: "3.5em" }, 
+            { text: "tumhare", delay: 1000 + VISUAL_OFFSET_MS, background: "#6a211e", color: "white", size: "3.5em" }, 
+            { text: "Sabke", delay: 2000 + VISUAL_OFFSET_MS, background: "#f7f3e8", color: "#6a211e", size: "4em", class: "dark-text" }, 
+            { text: "liye", delay: 3000 + VISUAL_OFFSET_MS, background: "#f7f3e8", color: "#6a211e", size: "3.5em", class: "dark-text" }, 
+            { text: "Happy", delay: 4000 + VISUAL_OFFSET_MS, background: "#6a211e", color: "white", size: "3em" }, 
+            { text: `Diwali, ${name}!`, delay: 5000 + VISUAL_OFFSET_MS, background: "#6a211e", color: "white", size: "2.2em" }, 
+            { text: "Saare", delay: 6500 + VISUAL_OFFSET_MS, background: "#f7f3e8", color: "#6a211e", size: "4em", class: "dark-text" }, 
+            { text: "sitaarein", delay: 7500 + VISUAL_OFFSET_MS, background: "#f7f3e8", color: "#6a211e", size: "3.5em", class: "dark-text" }, 
+            { text: "uske liye", delay: 8500 + VISUAL_OFFSET_MS, background: "#6a211e", color: "white", size: "3.5em" }, 
+            { text: `Happy Diwali!`, delay: 9500 + VISUAL_OFFSET_MS, background: "#f7f3e8", color: "#6a211e", size: "2.2em", class: "dark-text" }, 
+        ];
+        
+        animationScreen.style.opacity = '1';
+        animationScreen.style.pointerEvents = 'auto';
+
+        lines.forEach(lineData => {
+            const totalDelay = 1000 + lineData.delay; 
+
+            setTimeout(() => {
+                animationScreen.innerHTML = '';
+                
+                animationScreen.style.transition = 'background 0.3s ease-in-out';
+                animationScreen.style.background = lineData.background;
+
+                const lineElement = document.createElement("div");
+                lineElement.classList.add("animated-line");
+                if (lineData.class) {
+                    lineElement.classList.add(lineData.class);
+                }
+
+                lineElement.textContent = lineData.text;
+                lineElement.style.color = lineData.color;
+                lineElement.style.animation = 'slide-fade-in 0.5s forwards';
+                
+                animationScreen.appendChild(lineElement);
+            }, totalDelay);
+        });
+
+        const lastWordDelay = 9500 + VISUAL_OFFSET_MS;
+        const fadeOutTime = 1000 + lastWordDelay + 1000;
+        
+        setTimeout(() => {
+            if (!animationAudio.ended) {
+                 animationScreen.style.opacity = '0';
+            }
+        }, fadeOutTime); 
+    }
+
+    // --- Core UI Logic ---
+
+    document.getElementById("start-btn").addEventListener("click", () => {
+        const name = document.getElementById("name-input").value.trim() || "Friend";
+        
+        // START AUDIO IMMEDIATELY ON CLICK
+        animationAudio.volume = 1.0; 
+        animationAudio.currentTime = 0;
+        const playPromise = animationAudio.play();
+        if (playPromise !== undefined) {
+             playPromise.catch(error => {
+                console.log("Animation audio failed to play immediately:", error);
+            });
+        }
+        
+        // Listen for when the audio finishes playing to complete the transition
+        const audioEndListener = () => {
+             completeAnimation(name);
+             animationAudio.removeEventListener('ended', audioEndListener);
+        };
+        animationAudio.addEventListener('ended', audioEndListener);
+        
+        
+        const rocket = document.createElement('div');
+        rocket.classList.add('start-rocket');
+        rocket.textContent = "🚀";
+        startScreen.appendChild(rocket);
+        
+        const startBtn = document.getElementById("start-btn");
+        const nameInput = document.getElementById("name-input");
+        startBtn.disabled = true;
+        nameInput.disabled = true;
+
+        rocket.style.animation = 'launch-rocket 1s forwards';
+        
+        // Start rocket animation (visual delay)
+        setTimeout(() => {
+            const centerX = window.innerWidth / 2;
+            const topY = window.innerHeight * 0.1;
+            
+            createExplosion(centerX, topY, document.body, false);
+            rocket.remove();
+
+            startScreen.style.display = "none";
+            mainContainer.style.display = "block";
+            
+            // Start word animation (visuals only, audio is already playing)
+            runVideoAnimation(name);
+            
+        }, 1000); 
+    });
+
+    // --- Mobile-Friendly Games ---
+
+    // 1. Cracker Challenge (NEW GAME)
+    window.startCrackerChallenge = function() {
+        clearGameIntervals();
+
+        gameArea.innerHTML = "<h2>💥 Cracker Challenge!</h2><p id='cracker-status'>Click 'Start' to begin!</p><div id='cracker-game' style='height: 150px; display: flex; justify-content: center; align-items: center; background: rgba(0, 0, 0, 0.5); border-radius: 10px; flex-direction: column; overflow: hidden; position: relative;'></div><button id='cracker-start-btn' style='margin-top: 15px; padding: 10px 20px; font-size: 1.1em; border-radius: 10px;'>Start Challenge</button><p style='font-size: 0.9em;'>Level determines speed!</p>";
+        
+        const crackerGame = document.getElementById("cracker-game");
+        const crackerStatus = document.getElementById("cracker-status");
+        const startBtn = document.getElementById("cracker-start-btn");
+
+        let gameStatus = 'waiting'; // 'waiting', 'ready', 'exploding'
+        let level = 1;
+        let timerId;
+        let crackerElement = null;
+        
+        // Store interval ID for cleanup
+        crackerGame.dataset.intervalId = 'crackerGameTimeout'; 
+
+        function resetGame() {
+            clearTimeout(timerId);
+            if (crackerElement) crackerElement.remove();
+            crackerElement = null;
+            crackerGame.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            gameStatus = 'waiting';
+            startBtn.textContent = `Start Level ${level}`;
+            startBtn.disabled = false;
+            crackerStatus.textContent = `Click the cracker before it explodes! (Level ${level})`;
+        }
+
+        function createCracker() {
+            const cracker = document.createElement('div');
+            cracker.textContent = '🧨';
+            cracker.style.fontSize = '4em';
+            cracker.style.cursor = 'pointer';
+            cracker.style.transition = 'transform 0.1s';
+            cracker.style.animation = 'pulse 0.5s infinite alternate';
+            cracker.style.position = 'relative';
+
+            cracker.addEventListener('click', handleCrackerClick);
+            crackerGame.appendChild(cracker);
+            crackerElement = cracker;
+        }
+
+        function handleCrackerClick() {
+            if (gameStatus === 'ready') {
+                const reactionTime = Date.now() - startTime;
+                clearTimeout(timerId);
+                gameStatus = 'waiting';
+                playSound(winSound);
+                crackerStatus.textContent = `Success! Reaction time: ${reactionTime}ms. Next level is faster!`;
+                level++;
+                startBtn.textContent = `Continue to Level ${level}`;
+                startBtn.disabled = false;
+                if (crackerElement) crackerElement.remove();
+                crackerGame.style.backgroundColor = '#33cc33'; // Green for success
+            } else {
+                 // Too slow or too early (waiting or exploding)
+                 failGame("Too slow or too early! 👎");
+            }
+        }
+
+        function failGame(message) {
+            clearTimeout(timerId);
+            gameStatus = 'waiting';
+            playSound(failSound);
+            crackerStatus.textContent = `${message} Game Over! Reached Level ${level}.`;
+            level = 1;
+            startBtn.textContent = 'Restart Challenge';
+            startBtn.disabled = false;
+            if (crackerElement) {
+                // Get cracker's center coordinates relative to the body
+                const crackerRect = crackerElement.getBoundingClientRect();
+                const crackerX = crackerRect.left + crackerRect.width / 2;
+                const crackerY = crackerRect.top + crackerRect.height / 2;
+                
+                // Use global createExplosion to show the blast visually centered
+                createExplosion(crackerX, crackerY, document.body, false);
+                crackerElement.remove();
+            }
+            crackerGame.style.backgroundColor = '#cc3333'; // Red for fail
+        }
+
+        let startTime;
+        function startGameRound() {
+            startBtn.disabled = true;
+            
+            // Adjust speeds based on level
+            const maxWaitTime = 4000;
+            const minWaitTime = 1000;
+            const waitTimeRange = maxWaitTime - minWaitTime;
+            // Wait time reduces by 200ms per level
+            const waitTime = Math.max(minWaitTime, maxWaitTime - (level * 200) + (Math.random() * 500)); 
+            
+            // Reaction window reduces by 100ms per level
+            const reactionWindow = Math.max(500, 1500 - level * 100); 
+
+            resetGame();
+            createCracker();
+            
+            crackerStatus.textContent = "Waiting for the fuse...";
+            
+            // Phase 1: Waiting Period
+            timerId = setTimeout(() => {
+                // Phase 2: Reaction Period (The "GO" moment)
+                gameStatus = 'ready';
+                startTime = Date.now();
+                crackerStatus.textContent = "💥 CLICK NOW! 💥";
+                crackerGame.style.backgroundColor = 'darkorange';
+
+                // Phase 3: Explosion (Failure if not clicked)
+                timerId = setTimeout(() => {
+                    gameStatus = 'exploding';
+                    failGame("💥 KABOOM! You missed the crackle!");
+                }, reactionWindow);
+
+            }, waitTime);
+            
+            // Reassign the timeoutId to be accessible by clearGameIntervals
+            crackerGame.timerId = timerId;
+        }
+
+        startBtn.addEventListener('click', startGameRound);
+        resetGame();
+    }
+
+
+    // 2. Diya Memory Game
+    window.startDiyaMemoryGame = function() {
+        clearGameIntervals();
+        
+        gameArea.innerHTML = "<h2>🪔 Diya Memory Game</h2><p id='diya-status'>Watch the sequence carefully!</p><div id='diya-grid'></div><p id='diya-level'>Level: 1</p>";
+        const diyaGrid = document.getElementById("diya-grid");
+        const diyaStatus = document.getElementById("diya-status");
+        const diyaLevel = document.getElementById("diya-level");
+        
+        for (let i = 0; i < 9; i++) {
+            const diya = document.createElement("div");
+            diya.classList.add("diya");
+            diya.dataset.index = i;
+            diya.textContent = '🪔';
+            diyaGrid.appendChild(diya);
+        }
+        
+        let sequence = [];
+        let playerSequence = [];
+        let level = 1;
+        let isPlaying = false;
+
+        function generateSequence() {
+            sequence.length = 0;
+            for (let i = 0; i < level + 2; i++) { 
+                sequence.push(Math.floor(Math.random() * 9));
+            }
+        }
+        
+        function lightUpDiya(index) {
+            const diya = diyaGrid.querySelector(`[data-index='${index}']`);
+            if (diya) {
+                diya.classList.add('lit');
+                playSound(popSound); 
+                setTimeout(() => diya.classList.remove('lit'), 400);
+            }
+        }
+
+        function playSequence() {
+            isPlaying = true;
+            diyaStatus.textContent = "Watch carefully...";
+            playerSequence.length = 0;
+            
+            let i = 0;
+            const intervalId = setInterval(() => {
+                if (i < sequence.length) {
+                    lightUpDiya(sequence[i]);
+                    i++;
+                } else {
+                    clearInterval(intervalId);
+                    isPlaying = false;
+                    diyaStatus.textContent = "Your turn! Repeat the sequence.";
+                }
+            }, 600);
+            
+            diyaGrid.dataset.intervalId = intervalId;
+        }
+        
+        function checkSequence(index) {
+            if (isPlaying) return;
+            
+            playerSequence.push(index);
+            
+            // Check the last played item
+            if (playerSequence[playerSequence.length - 1] !== sequence[playerSequence.length - 1]) {
+                // FAIL
+                playSound(failSound);
+                diyaStatus.textContent = "Incorrect! Starting over at Level 1.";
+                level = 1;
+                diyaLevel.textContent = `Level: ${level}`;
+                setTimeout(startGame, 1500);
+                return;
+            }
+            
+            // If the full sequence is complete
+            if (playerSequence.length === sequence.length) {
+                // SUCCESS
+                playSound(winSound);
+                diyaStatus.textContent = "Excellent! Moving to the next level.";
+                level++;
+                diyaLevel.textContent = `Level: ${level}`;
+                setTimeout(startGame, 2000);
+            }
+        }
+
+        diyaGrid.addEventListener('click', (e) => {
+            const diya = e.target.closest('.diya');
+            if (diya && !isPlaying) {
+                diya.classList.add('lit');
+                playSound(popSound);
+                const index = parseInt(diya.dataset.index);
+                setTimeout(() => diya.classList.remove('lit'), 200);
+                checkSequence(index);
+            }
+        });
+        
+        function startGame() {
+            generateSequence();
+            setTimeout(playSequence, 1000);
+        }
+        
+        startGame();
+    }
+
+
+    // 3. Sparkle Touch
+    window.startTouchSparkle = function() {
+        clearGameIntervals();
+        
+        gameArea.innerHTML = "<h2>✨ Sparkle Touch!</h2><p>Tap and drag anywhere to draw with festive sparkles!</p>";
+        const touchArea = document.createElement('div');
+        touchArea.style.height = '300px';
+        touchArea.style.position = 'relative';
+        touchArea.style.background = 'rgba(0, 0, 0, 0.4)';
+        touchArea.style.borderRadius = '10px';
+        touchArea.style.cursor = 'crosshair';
+        gameArea.appendChild(touchArea);
+
+        let isDrawing = false;
+
+        function handlePointerMove(e) {
+            if (e.buttons === 0 && e.pointerType !== 'touch') return; 
+
+            const rect = touchArea.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const spark = document.createElement("div");
+            spark.classList.add("spark");
+            spark.style.left = x + "px";
+            spark.style.top = y + "px";
+            touchArea.appendChild(spark);
+            
+            spark.style.transition = 'opacity 0.7s, transform 0.7s';
+            spark.style.opacity = '0.5';
+            spark.style.transform = 'scale(0.5)';
+            setTimeout(() => spark.remove(), 700);
+        }
+
+        touchArea.addEventListener('pointerdown', (e) => {
+            isDrawing = true;
+            handlePointerMove(e);
+        });
+
+        touchArea.addEventListener('pointermove', (e) => {
+            if (isDrawing) {
+                handlePointerMove(e);
+            }
+        });
+
+        touchArea.addEventListener('pointerup', () => {
+            isDrawing = false;
+        });
+        
+        touchArea.addEventListener('mouseleave', () => {
+            isDrawing = false;
+        });
+    }
+
+    // 4. Rangoli Color Match Game
+    window.startColorMatchGame = function() {
+        clearGameIntervals();
+        
+        const COLORS = ["#ff5733", "#33ff57", "#3357ff", "#ff33f6", "#33ffff"]; // Red, Green, Blue, Pink, Cyan
+        const TARGET_PATTERN = [
+            0, 1, 2, 3,
+            4, 0, 1, 2,
+            3, 4, 0, 1,
+            2, 3, 4, 0
+        ]; // Indices of colors in COLORS array
+
+        gameArea.innerHTML = `
+            <h2>🎨 Rangoli Color Match</h2>
+            <p>Tap tiles to cycle colors and match the target pattern!</p>
+            <p style="font-weight: bold; margin-bottom: 5px;">Target Pattern (Color Key):</p>
+            <div id='target-pattern-container'></div>
+            <div id='rangoli-grid'></div>
+            <p id="match-status" style="font-size: 1.2em; color: #ffcc00;">Tiles matched: 0/16</p>
+        `;
+        
+        const rangoliGrid = document.getElementById("rangoli-grid");
+        const targetContainer = document.getElementById("target-pattern-container");
+        const matchStatus = document.getElementById("match-status");
+        
+        let tileElements = [];
+
+        // 1. Setup Target Pattern Display
+        TARGET_PATTERN.slice(0, 5).forEach(colorIndex => { // Show first 5 colors in the pattern as a key
+            const targetTile = document.createElement('div');
+            targetTile.classList.add('target-tile');
+            targetTile.style.backgroundColor = COLORS[colorIndex];
+            targetContainer.appendChild(targetTile);
+        });
+
+        // 2. Setup Game Grid
+        for (let i = 0; i < 16; i++) {
+            const tile = document.createElement("div");
+            tile.classList.add("rangoli-tile");
+            tile.dataset.currentIndex = 0; 
+            tile.dataset.targetIndex = TARGET_PATTERN[i];
+            
+            // Randomly set initial color index for scramble
+            const initialIndex = Math.floor(Math.random() * COLORS.length);
+            tile.dataset.currentIndex = initialIndex;
+            tile.style.backgroundColor = COLORS[initialIndex];
+            
+            tile.addEventListener("click", () => handleTileClick(tile));
+            rangoliGrid.appendChild(tile);
+            tileElements.push(tile);
+        }
+        
+        // 3. Game Logic
+        function checkWinCondition() {
+            let matchedCount = 0;
+            tileElements.forEach(tile => {
+                if (parseInt(tile.dataset.currentIndex) === parseInt(tile.dataset.targetIndex)) {
+                    matchedCount++;
+                    tile.style.border = '2px solid #33ff57'; // Highlight correct tiles
+                } else {
+                    tile.style.border = '1px solid #111';
+                }
+            });
+            
+            matchStatus.textContent = `Tiles matched: ${matchedCount}/16`;
+
+            if (matchedCount === 16) {
+                // WIN!
+                playSound(winSound);
+                rangoliGrid.style.pointerEvents = 'none';
+                matchStatus.innerHTML = "🎉 **Rangoli Complete!** Congratulations! 🎉";
+            }
+        }
+        
+        function handleTileClick(tile) {
+            playSound(popSound);
+            let currentIndex = parseInt(tile.dataset.currentIndex);
+            
+            // Cycle to the next color
+            currentIndex = (currentIndex + 1) % COLORS.length;
+            
+            tile.dataset.currentIndex = currentIndex;
+            tile.style.backgroundColor = COLORS[currentIndex];
+            
+            checkWinCondition();
+        }
+        
+        checkWinCondition(); // Initial check/status update
+    }
+    
+    // --- Global Game Area Management (Cleanup Function) ---
+    function clearGameIntervals() {
+        // Clear interval for Diya Memory sequence
+        const diyaGrid = document.getElementById('diya-grid');
+        if (diyaGrid && diyaGrid.dataset.intervalId) {
+            clearInterval(diyaGrid.dataset.intervalId);
+            delete diyaGrid.dataset.intervalId; 
+        }
+
+        // Clear timeout for Cracker Challenge
+        const crackerGame = document.getElementById('cracker-game');
+        if (crackerGame && crackerGame.timerId) {
+            clearTimeout(crackerGame.timerId);
+            delete crackerGame.timerId; 
+        }
+    }
+    
+    // Attach cleanup to all menu buttons to ensure games stop when switching
+    const menuButtons = document.querySelectorAll('.menu button');
+    menuButtons.forEach(button => {
+        button.addEventListener('click', clearGameIntervals);
+    });
+
+</script>
+</body>
+</html>
